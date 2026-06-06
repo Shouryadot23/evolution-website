@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVOLUTION — The Story of Everything</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@900&family=Inter:wght@300;600&family=Orbitron:wght@700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#000;font-family:'Inter',sans-serif;cursor:none;user-select:none}
+
+/* ── Background Image Layer ── */
+.bg-layer{position:fixed;inset:0;z-index:0;transition:opacity 1.2s ease}
+.bg-img{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.5s ease;will-change:opacity}
+.bg-img.active{opacity:1}
+/* Ken Burns slow zoom effect */
+.bg-img.active{animation:kenburns 25s ease-in-out infinite alternate}
+@keyframes kenburns{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.08) translate(-1%,-1%)}}
+
+/* ── Overlays ── */
+.color-wash{position:fixed;inset:0;z-index:1;mix-blend-mode:color;opacity:.15;transition:background 1s}
+.dark-overlay{position:fixed;inset:0;z-index:2;background:rgba(0,0,0,.35)}
+.vig{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 25%,rgba(0,0,0,.8)100%)}
+
+/* ── Canvas FX ── */
+canvas{position:fixed;top:0;left:0;width:100vw;height:100vh}
+#fxCanvas{z-index:4;pointer-events:none}
+#cursorCanvas{z-index:8;pointer-events:none}
+
+/* ── JoJo Menacing ── */
+.menacing-container{position:fixed;inset:0;z-index:5;pointer-events:none;overflow:hidden}
+.menacing{position:absolute;font-family:'MS Gothic','Yu Gothic',serif;color:rgba(255,255,255,.07);font-weight:bold;animation:men 3.5s ease-in-out infinite;text-shadow:0 0 20px rgba(255,200,0,.1)}
+@keyframes men{0%{transform:translateY(0) scale(1);opacity:.05}50%{transform:translateY(-12px) scale(1.08);opacity:.15}100%{transform:translateY(0) scale(1);opacity:.05}}
+
+/* ── Speed Lines ── */
+.speed-lines{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:.04;
+  background:repeating-conic-gradient(rgba(255,255,255,.03) 0deg,transparent 1.5deg,transparent 10deg);
+  animation:speedRot 60s linear infinite}
+@keyframes speedRot{to{transform:rotate(360deg)}}
+
+/* ── UI ── */
+.info{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);text-align:center;z-index:7;pointer-events:none;transition:opacity .7s;width:92%;max-width:780px}
+.stitle{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,7vw,6rem);color:#fff;
+  text-shadow:0 0 40px rgba(255,200,0,.4),0 4px 0 rgba(0,0,0,.7),0 0 80px rgba(0,0,0,.8),2px 2px 0 rgba(0,0,0,.6);
+  letter-spacing:10px;margin-bottom:4px;text-transform:uppercase;
+  -webkit-text-stroke:1px rgba(0,0,0,.3)}
+.syear{font-family:'Orbitron',monospace;font-size:clamp(.55rem,1.1vw,.9rem);color:rgba(255,255,255,.55);letter-spacing:5px;margin-bottom:10px;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.sdesc{font-size:clamp(.75rem,1.05vw,.92rem);color:rgba(255,255,255,.75);line-height:1.7;text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 30px rgba(0,0,0,.5);
+  background:rgba(0,0,0,.25);backdrop-filter:blur(8px);border-radius:12px;padding:14px 20px;border:1px solid rgba(255,255,255,.05)}
+
+.nb{position:fixed;top:50%;transform:translateY(-50%);z-index:10;background:rgba(0,0,0,.5);
+  border:2px solid rgba(255,255,255,.2);color:rgba(255,255,255,.85);width:65px;height:65px;border-radius:50%;
+  font-size:1.8rem;cursor:none;pointer-events:all;transition:all .3s;backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;text-shadow:0 0 10px rgba(255,255,255,.3)}
+.nb:hover{background:rgba(255,200,0,.2);border-color:rgba(255,200,0,.7);color:#fff;
+  box-shadow:0 0 40px rgba(255,200,0,.3),inset 0 0 20px rgba(255,200,0,.1);transform:translateY(-50%) scale(1.15)}
+.nb.p{left:18px}.nb.n{right:18px}
+
+.tbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:5px;pointer-events:all}
+.td{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  cursor:none;transition:all .4s;pointer-events:all}
+.td.a{background:rgba(255,200,0,.9);box-shadow:0 0 12px rgba(255,200,0,.5);transform:scale(1.5);border-color:rgba(255,200,0,.8)}
+.td:hover{background:rgba(255,255,255,.4);transform:scale(1.3)}
+
+.pline{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#ff6600,#ffcc00,#ff0066);z-index:10;transition:width 1s;box-shadow:0 0 15px rgba(255,150,0,.6)}
+.cnt{position:fixed;top:18px;right:22px;z-index:10;font-family:'Orbitron',monospace;font-size:.7rem;color:rgba(255,255,255,.2);letter-spacing:3px;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.hint{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);font-size:.6rem;color:rgba(255,255,255,.12);letter-spacing:2px;z-index:7;pointer-events:none}
+
+/* ── Loading ── */
+.ld{position:fixed;inset:0;background:#000;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 2s}.ld.h{opacity:0;pointer-events:none}
+.lt{font-family:'Bebas Neue',sans-serif;font-size:4rem;color:#fff;letter-spacing:25px;animation:lp 2s ease-in-out infinite;text-shadow:0 0 40px rgba(255,200,0,.3)}
+.ls{font-size:.75rem;color:rgba(255,200,0,.4);letter-spacing:8px;margin-top:12px;font-family:'Orbitron',monospace}
+.lbar{width:200px;height:2px;background:rgba(255,255,255,.08);margin-top:25px;border-radius:2px;overflow:hidden}
+.lfill{height:100%;background:linear-gradient(90deg,transparent,rgba(255,200,0,.6),transparent);animation:lb 1.5s ease-in-out infinite}
+@keyframes lp{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes lb{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+
+/* ── Image credit ── */
+.credit{position:fixed;top:18px;left:18px;z-index:7;font-size:.5rem;color:rgba(255,255,255,.1);letter-spacing:1px;pointer-events:none}
+
+/* ── Intro Panel ── */
+.intro-badge{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;text-align:center;opacity:0;transition:opacity 1.2s}
+.intro-badge.show{opacity:1}
+.intro-name{font-family:'Cinzel',serif;font-size:clamp(3rem,8vw,7rem);color:#fff;
+  text-shadow:0 0 60px rgba(255,200,0,.5),0 0 120px rgba(255,150,0,.25),0 6px 0 rgba(0,0,0,.8);
+  letter-spacing:12px;text-transform:uppercase;margin-bottom:6px;
+  animation:introGlow 3s ease-in-out infinite alternate}
+.intro-origin{font-family:'Orbitron',monospace;font-size:clamp(.6rem,1.3vw,1rem);color:rgba(255,215,0,.7);letter-spacing:8px;margin-bottom:16px;
+  text-shadow:0 0 20px rgba(255,200,0,.3)}
+.intro-college{font-family:'Inter',sans-serif;font-size:clamp(.7rem,1.1vw,.9rem);color:rgba(255,255,255,.5);letter-spacing:4px;margin-bottom:12px}
+.intro-city{font-family:'Bebas Neue',sans-serif;font-size:clamp(1rem,2vw,1.6rem);color:rgba(255,200,100,.35);letter-spacing:8px;margin-top:8px}
+.intro-line{width:120px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,200,0,.5),transparent);margin:12px auto}
+@keyframes introGlow{0%{text-shadow:0 0 60px rgba(255,200,0,.5),0 0 120px rgba(255,150,0,.25),0 6px 0 rgba(0,0,0,.8)}
+100%{text-shadow:0 0 80px rgba(255,200,0,.7),0 0 160px rgba(255,150,0,.4),0 6px 0 rgba(0,0,0,.8)}}
+</style>
+</head>
+<body>
+
+<div class="ld" id="ld"><div class="lt">EVOLUTION</div><div class="ls">THE STORY OF EVERYTHING</div><div class="lbar"><div class="lfill"></div></div></div>
+
+<!-- Background images -->
+<div class="bg-layer" id="bgLayer"></div>
+<div class="color-wash" id="colorWash"></div>
+<div class="dark-overlay"></div>
+<div class="vig"></div>
+<div class="speed-lines"></div>
+
+<!-- Menacing symbols -->
+<div class="menacing-container" id="menacing"></div>
+
+<!-- FX Canvas -->
+<canvas id="fxCanvas"></canvas>
+<canvas id="cursorCanvas"></canvas>
+
+<!-- Intro Badge -->
+<div class="intro-badge show" id="introBadge">
+  <div class="intro-name">SHOURYA SINGH</div>
+  <div class="intro-line"></div>
+  <div class="intro-origin">☬ BORN IN VARANASI ☬</div>
+  <div class="intro-college">B.Tech CSE (AI & ML) · UPES Dehradun · 2024–2028</div>
+  <div class="intro-line"></div>
+  <div class="intro-city">— PRESENTS —</div>
+</div>
+
+<!-- UI -->
+<div class="pline" id="pl"></div>
+<div class="cnt" id="cnt">01 / 16</div>
+<div class="credit" id="credit"></div>
+<div class="info" id="info"><div class="stitle" id="st"></div><div class="syear" id="sy"></div><div class="sdesc" id="sd"></div></div>
+<button class="nb p" id="pb" onclick="prev()">&#10094;</button>
+<button class="nb n" id="nb2" onclick="next()">&#10095;</button>
+<div class="tbar" id="tb"></div>
+<div class="hint">ARROWS / SCROLL / SWIPE TO NAVIGATE &middot; MOVE CURSOR TO INTERACT</div>
+
+<script>
+"use strict";
+const PI=Math.PI,TAU=PI*2;
+
+// ══════════════════════════════════════════════════════
+// STAGES — Real images from Unsplash / NASA / Wikimedia
+// ══════════════════════════════════════════════════════
+const stages=[
+{t:'SHOURYA SINGH',y:'B.TECH CSE (AI/ML) · UPES DEHRADUN · 2024–2028',
+ d:'Born in Varanasi — the eternal city on the banks of the Ganges. Currently pursuing B.Tech in Computer Science (AI & ML) from UPES, Dehradun — Batch of 2028. Welcome to a journey through 13.8 billion years of cosmic evolution.',
+ img:'https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=1920&q=85',
+ acc:[255,215,0],wash:'rgba(255,200,0,.18)',credit:'Created by Shourya Singh',intro:true},
+
+{t:'THE BIG BANG',y:'13.8 BILLION YEARS AGO',
+ d:'In the beginning there was nothing. Then — EVERYTHING. All matter, energy, space and time exploded from an infinitely dense singularity in the most powerful event in cosmic history.',
+ img:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=85',
+ acc:[255,200,50],wash:'rgba(255,150,0,.2)',credit:'NASA Nebula'},
+
+{t:'QUARK EPOCH',y:'THE FIRST MICROSECOND',
+ d:'A boiling plasma of quarks and gluons — the raw building blocks of all matter. Fundamental forces separate. Matter and antimatter annihilate each other, leaving a faint excess of matter.',
+ img:'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1920&q=85',
+ acc:[180,100,255],wash:'rgba(150,50,255,.15)',credit:'Particle Physics'},
+
+{t:'FIRST ATOMS FORM',y:'380,000 YEARS LATER',
+ d:'Electrons bind to nuclei. The first hydrogen and helium atoms emerge. The universe becomes transparent for the first time — light is free to travel across the cosmos.',
+ img:'https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=1920&q=85',
+ acc:[100,200,255],wash:'rgba(50,150,255,.12)',credit:'Milky Way Stars'},
+
+{t:'FIRST STARS IGNITE',y:'13.6 BILLION YEARS AGO',
+ d:'Gravity pulls hydrogen clouds into massive stellar furnaces. The first stars blaze to life — giants hundreds of times larger than our Sun, forging heavier elements in their nuclear fire before dying in supernovae.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg/1280px-Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg',
+ acc:[150,180,255],wash:'rgba(80,120,255,.1)',credit:'NASA Hubble — Pillars of Creation'},
+
+{t:'GALAXIES FORM',y:'13.0 BILLION YEARS AGO',
+ d:'Billions of stars spiral together into colossal rotating structures — galaxies. Dark matter scaffolds cosmic filaments stretching across billions of light-years, building the largest architecture in existence.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/NGC_4414_%28NASA-med%29.jpg/1280px-NGC_4414_%28NASA-med%29.jpg',
+ acc:[140,130,220],wash:'rgba(100,80,200,.1)',credit:'NASA — Spiral Galaxy NGC 4414'},
+
+{t:'OUR SOLAR SYSTEM',y:'4.6 BILLION YEARS AGO',
+ d:'A cloud of gas and dust collapses, igniting our Sun. Remaining debris coalesces into eight planets, dozens of moons, and millions of asteroids — forming the solar system we call home.',
+ img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=1920&q=85',
+ acc:[255,180,50],wash:'rgba(255,150,30,.1)',credit:'Unsplash'},
+
+{t:'EARTH IS BORN',y:'4.5 BILLION YEARS AGO',
+ d:'Molten rock coalesces into a fiery sphere. Constant asteroid bombardment delivers water. Over millions of years the surface cools, oceans form, and a thin atmosphere wraps around our young world.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/The_Blue_Marble_%28remastered%29.jpg/1280px-The_Blue_Marble_%28remastered%29.jpg',
+ acc:[60,140,255],wash:'rgba(30,100,255,.1)',credit:'NASA — The Blue Marble'},
+
+{t:'FIRST LIFE',y:'3.8 BILLION YEARS AGO',
+ d:'In warm, mineral-rich ocean vents, complex molecules assemble into the first living cells. Microscopic organisms harness energy, replicate, and evolve. The spark of life ignites in the deep ocean.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg/1280px-Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg',
+ acc:[0,220,180],wash:'rgba(0,200,150,.15)',credit:'Deep Ocean Vents'},
+
+{t:'GREAT OXYGENATION',y:'2.4 BILLION YEARS AGO',
+ d:'Cyanobacteria flood the atmosphere with oxygen through photosynthesis. This triggers the first mass extinction — but paves the way for complex oxygen-breathing organisms to evolve.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/The_Blue_Marble_%28remastered%29.jpg/1280px-The_Blue_Marble_%28remastered%29.jpg',
+ acc:[60,255,120],wash:'rgba(40,220,100,.12)',credit:'Earth Atmosphere'},
+
+{t:'CAMBRIAN EXPLOSION',y:'541 MILLION YEARS AGO',
+ d:'Evolution goes berserk. Nearly every major animal group appears in just 20 million years. Trilobites, jellyfish, anomalocaris — the ocean fills with bizarre alien creatures, ancestors of everything alive today.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/NGC_4414_%28NASA-med%29.jpg/1280px-NGC_4414_%28NASA-med%29.jpg',
+ acc:[80,180,255],wash:'rgba(40,120,255,.15)',credit:'Cambrian Ocean'},
+
+{t:'LIFE CONQUERS LAND',y:'470 MILLION YEARS AGO',
+ d:'Plants crawl out of water onto barren rock. Mosses, ferns, then towering trees transform the landscape. Insects, amphibians and reptiles follow — building entirely new ecosystems on dry land.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Redwood_National_Park%2C_fog_in_the_forest.jpg/1280px-Redwood_National_Park%2C_fog_in_the_forest.jpg',
+ acc:[60,200,40],wash:'rgba(40,180,30,.12)',credit:'Ancient Forest'},
+
+{t:'AGE OF DINOSAURS',y:'230 — 66 MILLION YEARS AGO',
+ d:'For 164 million years, colossal reptiles dominate every corner of Earth. Towering T-Rex, gentle Brontosaurus, armored Triceratops, soaring Pterodactyls — the most powerful creatures to ever walk this planet.',
+ img:'https://images.unsplash.com/photo-1583144006017-74800d22ed08?w=1920&q=85',
+ acc:[200,220,60],wash:'rgba(160,200,30,.1)',credit:'Dinosaur — Unsplash'},
+
+{t:'THE GREAT EXTINCTION',y:'66 MILLION YEARS AGO',
+ d:'A 10-kilometer asteroid slams into the Yucatán Peninsula. The impact releases energy equivalent to billions of nuclear bombs — fire, tsunamis, and a years-long nuclear winter wipe out 75% of all species.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Chicxulub_impact_-_artist_impression.jpg/1280px-Chicxulub_impact_-_artist_impression.jpg',
+ acc:[255,80,0],wash:'rgba(255,60,0,.15)',credit:'Chicxulub Impact — NASA'},
+
+{t:'RISE OF MAMMALS',y:'66 — 2 MILLION YEARS AGO',
+ d:'With dinosaurs gone, small mammals explode into thousands of new species. Elephants roam savannas, horses gallop across grasslands, whales return to the sea, and primates swing through ancient forests.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/African_Bush_Elephant.jpg/1280px-African_Bush_Elephant.jpg',
+ acc:[220,170,80],wash:'rgba(200,150,50,.1)',credit:'African Elephant — Wikimedia'},
+
+{t:'RISE OF HUMANITY',y:'300,000 YEARS AGO — PRESENT',
+ d:'Homo sapiens emerge in Africa. We master fire, create art, develop language, build pyramids, forge empires, split the atom, walk on the Moon, and connect 8 billion minds through digital networks.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/New_york_times_square-terabass.jpg/1280px-New_york_times_square-terabass.jpg',
+ acc:[255,200,100],wash:'rgba(255,180,80,.1)',credit:'Times Square — Wikimedia'},
+
+{t:'THE FUTURE',y:'BEYOND — TRILLIONS OF YEARS',
+ d:'Interstellar colonization, artificial superintelligence, Dyson spheres harvesting entire stars. The universe expands and cools. Stars die. Perhaps consciousness itself transcends matter and outlasts entropy.',
+ img:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Crab_Nebula.jpg/1280px-Crab_Nebula.jpg',
+ acc:[180,130,255],wash:'rgba(150,100,255,.12)',credit:'Crab Nebula — NASA Hubble'}
+];
+
+// ══════════════════════════════════════════════════════
+// PRELOAD IMAGES
+// ══════════════════════════════════════════════════════
+const bgLayer=document.getElementById('bgLayer');
+stages.forEach((s,i)=>{
+  const div=document.createElement('div');
+  div.className='bg-img'+(i===0?' active':'');
+  div.style.backgroundImage=`url('${s.img}')`;
+  div.id='bg'+i;
+  bgLayer.appendChild(div);
+  // Preload
+  const img=new Image();img.src=s.img;
+});
+
+// ══════════════════════════════════════════════════════
+// MENACING SYMBOLS
+// ══════════════════════════════════════════════════════
+const menCont=document.getElementById('menacing');
+const menPositions=[
+  {top:'8%',left:'3%',size:'4rem',delay:'0s'},
+  {top:'18%',right:'5%',size:'3.5rem',delay:'.6s'},
+  {top:'55%',left:'2%',size:'3rem',delay:'1.2s'},
+  {top:'40%',right:'3%',size:'3.8rem',delay:'1.8s'},
+  {top:'5%',left:'45%',size:'2.5rem',delay:'2.4s'},
+  {top:'65%',right:'6%',size:'2.8rem',delay:'.3s'},
+  {top:'30%',left:'6%',size:'2.2rem',delay:'1.5s'},
+];
+menPositions.forEach(p=>{
+  const el=document.createElement('div');el.className='menacing';el.textContent='ゴ';
+  Object.entries(p).forEach(([k,v])=>{if(k==='delay')el.style.animationDelay=v;else if(k==='size')el.style.fontSize=v;else el.style[k]=v});
+  menCont.appendChild(el);
+});
+
+// ══════════════════════════════════════════════════════
+// CANVAS
+// ══════════════════════════════════════════════════════
+const fxC=document.getElementById('fxCanvas'),crC=document.getElementById('cursorCanvas');
+const fx=fxC.getContext('2d'),cr=crC.getContext('2d');
+let W,H,dpr=Math.min(devicePixelRatio,2);
+function resize(){W=innerWidth;H=innerHeight;
+  [fxC,crC].forEach(c=>{c.width=W*dpr;c.height=H*dpr;c.getContext('2d').setTransform(dpr,0,0,dpr,0,0)})}
+resize();addEventListener('resize',resize);
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let cur=0,trans=false,T=0;
+let mX=W/2,mY=H/2,pmX=W/2,pmY=H/2,vX=0,vY=0;
+let particles=[],trail=[];
+
+document.addEventListener('mousemove',e=>{
+  pmX=mX;pmY=mY;mX=e.clientX;mY=e.clientY;vX=mX-pmX;vY=mY-pmY;
+  trail.push({x:mX,y:mY,l:1,vx:vX*.2,vy:vY*.2});
+  if(trail.length>40)trail.shift();
+});
+
+// ══════════════════════════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════════════════════════
+function initP(){particles=[];const s=stages[cur];
+  for(let i=0;i<350;i++){const a=Math.random()*TAU,sp=Math.random()*1.8+.3,sz=Math.random()*2.5+.5;
+    particles.push({x:Math.random()*W,y:Math.random()*H,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+      size:sz,bs:sz,col:[s.acc[0]+(Math.random()-.5)*40,s.acc[1]+(Math.random()-.5)*40,s.acc[2]+(Math.random()-.5)*40],
+      ph:Math.random()*TAU,glow:Math.random()>.5})}}
+initP();
+
+function updP(){particles.forEach(p=>{
+  const dx=mX-p.x,dy=mY-p.y,d=Math.sqrt(dx*dx+dy*dy);
+  if(d<200){const f=(200-d)/200,a=Math.atan2(dy,dx);
+    if(d>40){p.vx+=Math.cos(a)*f*.3;p.vy+=Math.sin(a)*f*.3}
+    else{p.vx-=Math.cos(a)*f*.5;p.vy-=Math.sin(a)*f*.5}
+    p.vx+=Math.cos(a+1.57)*f*.2;p.vy+=Math.sin(a+1.57)*f*.2;
+    p.size=p.bs*(1+f*2.5)}
+  else p.size+=(p.bs-p.size)*.05;
+  p.vx*=.97;p.vy*=.97;p.x+=p.vx;p.y+=p.vy;
+  if(p.x<-20)p.x=W+20;if(p.x>W+20)p.x=-20;
+  if(p.y<-20)p.y=H+20;if(p.y>H+20)p.y=-20;
+  p.ph+=.02})}
+
+function drwP(c){const s=stages[cur];
+  particles.forEach(p=>{const a=Math.sin(p.ph)*.3+.5;
+    if(p.glow){const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*3.5);
+      g.addColorStop(0,`rgba(${p.col[0]|0},${p.col[1]|0},${p.col[2]|0},${a*.7})`);
+      g.addColorStop(1,'transparent');c.fillStyle=g;
+      c.fillRect(p.x-p.size*3.5,p.y-p.size*3.5,p.size*7,p.size*7)}
+    else{c.beginPath();c.arc(p.x,p.y,p.size,0,TAU);
+      c.fillStyle=`rgba(${p.col[0]|0},${p.col[1]|0},${p.col[2]|0},${a*.6})`;c.fill()}});
+
+  // Connections near cursor
+  c.lineWidth=.4;
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];
+    const dx=mX-p.x,dy=mY-p.y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<150){
+      for(let j=i+1;j<particles.length;j++){
+        const q=particles[j];
+        const dx2=p.x-q.x,dy2=p.y-q.y,d2=dx2*dx2+dy2*dy2;
+        if(d2<4000){const al=(1-d2/4000)*.15;
+          c.beginPath();c.moveTo(p.x,p.y);c.lineTo(q.x,q.y);
+          c.strokeStyle=`rgba(${s.acc[0]},${s.acc[1]},${s.acc[2]},${al})`;c.stroke()}}}}
+}
+
+// ══════════════════════════════════════════════════════
+// FX OVERLAY (JoJo effects per stage)
+// ══════════════════════════════════════════════════════
+function drawFX(c,t){
+  const s=stages[cur],CX=W/2,CY=H/2;
+
+  // Stage-specific overlay effects
+  switch(cur){
+    case 0:{ // INTRO — golden divine aura
+      // Radial golden burst
+      for(let i=0;i<8;i++){const r=((t*1.5+i*120)%600);
+        c.beginPath();c.arc(CX,CY,r,0,TAU);
+        c.strokeStyle=`rgba(255,200,0,${(1-r/600)*.08})`;c.lineWidth=2;c.stroke()}
+      // Floating golden kanji-style accents
+      for(let i=0;i<15;i++){const sx=CX+Math.sin(t*.003+i*2.1)*W*.35,sy=CY+Math.cos(t*.004+i*1.7)*H*.3;
+        const tw=Math.sin(t*.01+i*1.3)*.5+.5;
+        const g=c.createRadialGradient(sx,sy,0,sx,sy,4+tw*6);
+        g.addColorStop(0,`rgba(255,215,0,${tw*.15})`);g.addColorStop(1,'transparent');
+        c.fillStyle=g;c.beginPath();c.arc(sx,sy,4+tw*6,0,TAU);c.fill();
+        // Cross sparkle
+        c.strokeStyle=`rgba(255,215,0,${tw*.06})`;c.lineWidth=.5;
+        c.beginPath();c.moveTo(sx-10,sy);c.lineTo(sx+10,sy);c.stroke();
+        c.beginPath();c.moveTo(sx,sy-10);c.lineTo(sx,sy+10);c.stroke()}
+      break}
+    case 1:{ // BIG BANG — shockwaves
+      for(let i=0;i<4;i++){const r=((t*3+i*200)%800);
+        c.beginPath();c.arc(CX,CY,r,0,TAU);
+        c.strokeStyle=`rgba(255,200,50,${(1-r/800)*.25})`;c.lineWidth=2.5;c.stroke()}
+      // Central glow
+      const g=c.createRadialGradient(CX,CY,0,CX,CY,200);
+      g.addColorStop(0,`rgba(255,220,100,${.15+Math.sin(t*.02)*.05})`);
+      g.addColorStop(1,'transparent');c.fillStyle=g;c.beginPath();c.arc(CX,CY,200,0,TAU);c.fill();
+      break}
+    case 2:{ // QUARKS — swirling colored orbs
+      for(let i=0;i<12;i++){const px=CX+Math.sin(t*.008+i*1.1)*W*.3,py=CY+Math.cos(t*.01+i*1.4)*H*.25;
+        const colors=['rgba(255,80,80,.12)','rgba(80,255,80,.12)','rgba(80,80,255,.12)'];
+        const g=c.createRadialGradient(px,py,0,px,py,20);
+        g.addColorStop(0,colors[i%3]);g.addColorStop(1,'transparent');
+        c.fillStyle=g;c.beginPath();c.arc(px,py,20,0,TAU);c.fill();
+        // Connecting gluon lines
+        if(i>0){const px2=CX+Math.sin(t*.008+(i-1)*1.1)*W*.3,py2=CY+Math.cos(t*.01+(i-1)*1.4)*H*.25;
+          c.beginPath();c.moveTo(px,py);c.lineTo(px2,py2);c.strokeStyle='rgba(180,100,255,.04)';c.lineWidth=1;c.stroke()}}
+      break}
+    case 3:{ // ATOMS — orbital rings
+      for(let i=0;i<5;i++){const ax=CX+Math.sin(i*1.2+t*.003)*W*.25,ay=CY+Math.cos(i*1.5+t*.004)*H*.2;
+        for(let j=0;j<3;j++){c.save();c.translate(ax,ay);c.rotate(j*1.05+t*.005);
+          c.beginPath();c.ellipse(0,0,30+j*10,10,0,0,TAU);c.strokeStyle='rgba(100,200,255,.08)';c.lineWidth=1;c.stroke();
+          const ea=t*.03+j*2.09;
+          const g=c.createRadialGradient(Math.cos(ea)*(30+j*10),Math.sin(ea)*10,0,Math.cos(ea)*(30+j*10),Math.sin(ea)*10,5);
+          g.addColorStop(0,'rgba(150,220,255,.3)');g.addColorStop(1,'transparent');
+          c.fillStyle=g;c.beginPath();c.arc(Math.cos(ea)*(30+j*10),Math.sin(ea)*10,5,0,TAU);c.fill();
+          c.restore()}}
+      break}
+    case 4: case 5:{ // STARS/GALAXIES — twinkling
+      for(let i=0;i<20;i++){const sx=Math.sin(i*3.7+t*.001)*W*.4+CX,sy=Math.cos(i*2.3+t*.0008)*H*.35+CY;
+        const tw=Math.sin(t*.02+i*2)*.5+.5;
+        const g=c.createRadialGradient(sx,sy,0,sx,sy,3+tw*4);
+        g.addColorStop(0,`rgba(200,220,255,${tw*.2})`);g.addColorStop(1,'transparent');
+        c.fillStyle=g;c.beginPath();c.arc(sx,sy,3+tw*4,0,TAU);c.fill();
+        // Cross sparkle
+        c.strokeStyle=`rgba(200,220,255,${tw*.08})`;c.lineWidth=.5;
+        c.beginPath();c.moveTo(sx-8,sy);c.lineTo(sx+8,sy);c.stroke();
+        c.beginPath();c.moveTo(sx,sy-8);c.lineTo(sx,sy+8);c.stroke()}
+      break}
+    case 6:{ // SOLAR SYSTEM — orbit rings
+      for(let i=0;i<6;i++){const r=60+i*45;
+        c.beginPath();c.ellipse(CX,CY,r,r*.3,0,0,TAU);
+        c.strokeStyle='rgba(255,200,100,.04)';c.lineWidth=1;c.stroke();
+        const pa=t*(.02-i*.002);const px=CX+Math.cos(pa)*r,py=CY+Math.sin(pa)*r*.3;
+        const pg=c.createRadialGradient(px,py,0,px,py,4+i*2);
+        pg.addColorStop(0,`rgba(255,220,150,.3)`);pg.addColorStop(1,'transparent');
+        c.fillStyle=pg;c.beginPath();c.arc(px,py,4+i*2,0,TAU);c.fill()}
+      break}
+    case 7:{ // EARTH — atmospheric glow
+      const eg=c.createRadialGradient(CX,CY,80,CX,CY,250);
+      eg.addColorStop(0,'rgba(60,140,255,.08)');eg.addColorStop(.5,'rgba(30,80,200,.04)');eg.addColorStop(1,'transparent');
+      c.fillStyle=eg;c.beginPath();c.arc(CX,CY,250,0,TAU);c.fill();
+      break}
+    case 8:{ // FIRST LIFE — floating cell outlines
+      for(let i=0;i<12;i++){const cx2=CX+Math.sin(t*.003+i*1.1)*(150+i*10),cy2=CY+Math.cos(t*.004+i*.9)*(80+i*8);
+        const cr=8+i*1.5+Math.sin(t*.01+i)*3;
+        c.beginPath();c.arc(cx2,cy2,cr,0,TAU);c.strokeStyle=`rgba(0,220,180,${.08+Math.sin(t*.015+i)*.03})`;c.lineWidth=1.5;c.stroke();
+        // Nucleus
+        const g=c.createRadialGradient(cx2,cy2,0,cx2,cy2,cr*.3);
+        g.addColorStop(0,'rgba(0,255,200,.08)');g.addColorStop(1,'transparent');c.fillStyle=g;c.beginPath();c.arc(cx2,cy2,cr*.3,0,TAU);c.fill()}
+      break}
+    case 9:{ // OXYGENATION — rising bubbles
+      for(let i=0;i<25;i++){const bx=W*.05+(i/25)*W*.9+Math.sin(t*.006+i)*15;
+        const by=H-((t*.5+i*30)%H);const br=2+Math.sin(t*.01+i)*1.5;
+        c.beginPath();c.arc(bx,by,br,0,TAU);c.strokeStyle='rgba(60,255,120,.12)';c.lineWidth=1;c.stroke()}
+      break}
+    case 10:{ // CAMBRIAN — creature outlines
+      for(let i=0;i<6;i++){const cx2=W*.1+i*(W*.15)+Math.sin(t*.003+i)*20,cy2=H*.4+Math.cos(t*.004+i)*50;
+        // Trilobite outlines
+        c.beginPath();c.ellipse(cx2,cy2,12,18,0,0,TAU);c.strokeStyle='rgba(100,180,255,.06)';c.lineWidth=1.5;c.stroke();
+        c.beginPath();c.moveTo(cx2-12,cy2);c.lineTo(cx2+12,cy2);c.strokeStyle='rgba(100,180,255,.04)';c.stroke()}
+      // Jellyfish
+      for(let i=0;i<4;i++){const jx=W*.15+i*(W*.2),jy=H*.2+Math.sin(t*.003+i*2)*60;
+        c.beginPath();c.ellipse(jx,jy,14,10,0,PI,0);c.strokeStyle='rgba(120,200,255,.06)';c.lineWidth=1;c.stroke();
+        for(let j=-2;j<=2;j++){c.beginPath();c.moveTo(jx+j*5,jy);
+          c.quadraticCurveTo(jx+j*5+Math.sin(t*.015+j)*6,jy+15,jx+j*5+Math.sin(t*.01+j)*10,jy+30);
+          c.strokeStyle='rgba(120,200,255,.04)';c.stroke()}}
+      break}
+    case 11:{ // LAND — leaf particles
+      for(let i=0;i<15;i++){const lx=Math.sin(t*.002+i*2.3)*W*.4+CX,ly=(t*.3+i*60)%H;
+        c.save();c.translate(lx,ly);c.rotate(t*.005+i);
+        c.beginPath();c.ellipse(0,0,4,8,0,0,TAU);c.fillStyle='rgba(60,200,40,.06)';c.fill();c.restore()}
+      break}
+    case 12:{ // DINOSAURS — dramatic speed lines from center
+      for(let i=0;i<30;i++){const a=(i/30)*TAU+t*.001;
+        const inner=100+Math.sin(t*.005+i)*30;const outer=Math.max(W,H)*.6;
+        c.beginPath();c.moveTo(CX+Math.cos(a)*inner,CY+Math.sin(a)*inner);
+        c.lineTo(CX+Math.cos(a)*outer,CY+Math.sin(a)*outer);
+        c.strokeStyle=`rgba(200,220,60,${.02+Math.sin(t*.01+i)*.01})`;c.lineWidth=1;c.stroke()}
+      break}
+    case 13:{ // EXTINCTION — impact flashes
+      const ip=Math.abs(Math.sin(t*.025));
+      const ig=c.createRadialGradient(CX,CY*.6,0,CX,CY*.6,300);
+      ig.addColorStop(0,`rgba(255,100,0,${ip*.15})`);ig.addColorStop(.5,`rgba(255,50,0,${ip*.06})`);ig.addColorStop(1,'transparent');
+      c.fillStyle=ig;c.beginPath();c.arc(CX,CY*.6,300,0,TAU);c.fill();
+      // Debris
+      for(let i=0;i<20;i++){const a=(i/20)*TAU+t*.003;const len=80+Math.sin(t*.015+i)*50;
+        c.beginPath();c.moveTo(CX,CY*.6);c.lineTo(CX+Math.cos(a)*len,CY*.6+Math.sin(a)*len);
+        c.strokeStyle=`rgba(255,80,0,${.06+Math.sin(t*.02+i)*.02})`;c.lineWidth=1.5;c.stroke()}
+      break}
+    case 14:{ // MAMMALS — warm dust motes
+      for(let i=0;i<20;i++){const mx2=Math.sin(t*.002+i*1.7)*W*.4+CX,my2=Math.cos(t*.003+i*2.1)*H*.3+CY;
+        const tw=Math.sin(t*.01+i)*.5+.5;
+        const g=c.createRadialGradient(mx2,my2,0,mx2,my2,3);
+        g.addColorStop(0,`rgba(255,200,100,${tw*.1})`);g.addColorStop(1,'transparent');
+        c.fillStyle=g;c.beginPath();c.arc(mx2,my2,3,0,TAU);c.fill()}
+      break}
+    case 15:{ // HUMANS — golden divine rays from top
+      for(let i=0;i<10;i++){const a=-.3+i*.06+Math.sin(t*.003+i)*.05;
+        const g=c.createLinearGradient(CX,0,CX+Math.cos(a+PI/2)*H,H);
+        g.addColorStop(0,'rgba(255,220,100,.04)');g.addColorStop(1,'transparent');
+        c.fillStyle=g;c.save();c.translate(CX,0);c.rotate(a);c.fillRect(-3,0,6,H);c.restore()}
+      break}
+    case 16:{ // FUTURE — expanding consciousness rings
+      for(let i=0;i<6;i++){const r=((t*.8+i*90)%500);
+        c.beginPath();c.arc(CX,CY,r,0,TAU);
+        c.strokeStyle=`rgba(180,130,255,${(1-r/500)*.1})`;c.lineWidth=1.5;c.stroke()}
+      // Central light
+      const fg=c.createRadialGradient(CX,CY,0,CX,CY,80);
+      fg.addColorStop(0,`rgba(255,255,255,${.08+Math.sin(t*.01)*.03})`);fg.addColorStop(1,'transparent');
+      c.fillStyle=fg;c.beginPath();c.arc(CX,CY,80,0,TAU);c.fill();
+      break}
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// CURSOR
+// ══════════════════════════════════════════════════════
+function drwCur(c){
+  c.clearRect(0,0,W,H);const s=stages[cur];
+  // Trail
+  trail.forEach(t2=>{t2.l-=.025;t2.x+=t2.vx*.3;t2.y+=t2.vy*.3;t2.vx*=.94;t2.vy*=.94;
+    if(t2.l<=0)return;const sz=t2.l*12;
+    const g=c.createRadialGradient(t2.x,t2.y,0,t2.x,t2.y,sz);
+    g.addColorStop(0,`rgba(${s.acc[0]},${s.acc[1]},${s.acc[2]},${t2.l*.5})`);g.addColorStop(1,'transparent');
+    c.fillStyle=g;c.beginPath();c.arc(t2.x,t2.y,sz,0,TAU);c.fill()});
+  trail=trail.filter(t2=>t2.l>0);
+  // Main glow
+  const g1=c.createRadialGradient(mX,mY,0,mX,mY,35);
+  g1.addColorStop(0,`rgba(255,255,255,.35)`);
+  g1.addColorStop(.3,`rgba(${s.acc[0]},${s.acc[1]},${s.acc[2]},.15)`);
+  g1.addColorStop(1,'transparent');
+  c.fillStyle=g1;c.beginPath();c.arc(mX,mY,35,0,TAU);c.fill();
+  // Inner dot
+  c.beginPath();c.arc(mX,mY,3,0,TAU);
+  c.fillStyle='rgba(255,255,255,.85)';c.fill();
+  c.shadowColor=`rgb(${s.acc[0]},${s.acc[1]},${s.acc[2]})`;c.shadowBlur=15;c.fill();c.shadowBlur=0;
+  // Ring
+  c.beginPath();c.arc(mX,mY,18+Math.sin(T*.03)*3,0,TAU);
+  c.strokeStyle='rgba(255,255,255,.12)';c.lineWidth=1;c.stroke();
+  // Velocity streak
+  const vel=Math.sqrt(vX*vX+vY*vY);
+  if(vel>3){const a=Math.atan2(vY,vX);c.save();c.translate(mX,mY);c.rotate(a);
+    const tg=c.createLinearGradient(0,0,-vel*3,0);
+    tg.addColorStop(0,`rgba(${s.acc[0]},${s.acc[1]},${s.acc[2]},.35)`);tg.addColorStop(1,'transparent');
+    c.fillStyle=tg;c.beginPath();c.moveTo(0,0);c.lineTo(-vel*3,-3);c.lineTo(-vel*3,3);c.closePath();c.fill();c.restore()}
+}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+function go(i){if(i<0||i>=stages.length||i===cur||trans)return;trans=true;
+  document.getElementById('info').style.opacity='0';
+  document.getElementById('introBadge').classList.remove('show');
+  setTimeout(()=>{
+    // Switch background image
+    document.querySelectorAll('.bg-img').forEach(el=>el.classList.remove('active'));
+    document.getElementById('bg'+i).classList.add('active');
+    document.getElementById('colorWash').style.background=stages[i].wash;
+    cur=i;initP();updUI();
+    // Show intro badge or info panel
+    if(stages[i].intro){
+      document.getElementById('info').style.opacity='0';
+      document.getElementById('introBadge').classList.add('show');
+    } else {
+      document.getElementById('info').style.opacity='1';
+      document.getElementById('introBadge').classList.remove('show');
+    }
+    trans=false;
+  },700)}
+function next(){go(cur+1)}function prev(){go(cur-1)}
+
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')next();if(e.key==='ArrowLeft')prev()});
+let sA=0;document.addEventListener('wheel',e=>{sA+=e.deltaY;if(Math.abs(sA)>80){sA>0?next():prev();sA=0}});
+let tSX=0;
+document.addEventListener('touchstart',e=>{tSX=e.touches[0].clientX;mX=e.touches[0].clientX;mY=e.touches[0].clientY});
+document.addEventListener('touchmove',e=>{mX=e.touches[0].clientX;mY=e.touches[0].clientY;e.preventDefault()},{passive:false});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tSX;if(Math.abs(dx)>50){dx<0?next():prev()}});
+
+function initTL(){const b=document.getElementById('tb');b.innerHTML='';
+  stages.forEach((_,i)=>{const d=document.createElement('div');d.className='td'+(i===cur?' a':'');
+    d.addEventListener('click',()=>go(i));b.appendChild(d)})}
+initTL();
+
+function updUI(){const s=stages[cur];
+  document.getElementById('st').textContent=s.t;
+  document.getElementById('sy').textContent=s.y;
+  document.getElementById('sd').textContent=s.d;
+  document.getElementById('cnt').textContent=String(cur+1).padStart(2,'0')+' / '+String(stages.length).padStart(2,'0');
+  document.getElementById('pl').style.width=((cur+1)/stages.length*100)+'%';
+  document.getElementById('credit').textContent=s.credit||'';
+  document.querySelectorAll('.td').forEach((d,i)=>d.classList.toggle('a',i===cur));
+  document.getElementById('pb').style.opacity=cur===0?'.15':'1';
+  document.getElementById('nb2').style.opacity=cur===stages.length-1?'.15':'1'}
+
+// ══════════════════════════════════════════════════════
+// MAIN LOOP
+// ══════════════════════════════════════════════════════
+function loop(){T++;
+  fx.clearRect(0,0,W,H);
+  drawFX(fx,T);
+  updP();drwP(fx);
+  drwCur(cr);
+  if(trans){fx.fillStyle=`rgba(0,0,0,${Math.sin(T*.12)*.2})`;fx.fillRect(0,0,W,H)}
+  requestAnimationFrame(loop)}
+
+// ── Init ──
+updUI();
+document.getElementById('info').style.opacity='0'; // Hide info on intro slide
+document.getElementById('colorWash').style.background=stages[0].wash;
+
+// Wait for first image to load
+const firstImg=new Image();
+firstImg.onload=()=>{setTimeout(()=>{document.getElementById('ld').classList.add('h');loop()},1500)};
+firstImg.onerror=()=>{setTimeout(()=>{document.getElementById('ld').classList.add('h');loop()},2000)};
+firstImg.src=stages[0].img;
+// Fallback timeout
+setTimeout(()=>{if(!document.getElementById('ld').classList.contains('h')){document.getElementById('ld').classList.add('h');loop()}},5000);
+</script>
+</body>
+</html>
